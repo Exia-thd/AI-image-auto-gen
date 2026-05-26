@@ -1,1 +1,13 @@
-{ "total": 0, "limit": 80, "requests": 0, "history": [] }
+{
+  "total": 0.06,
+  "limit": 80,
+  "requests": 1,
+  "history": [
+    {
+      "timestamp": "2026-05-26T07:31:39.330Z",
+      "phone": "0912345678",
+      "hash": "abbd4841ba31f4d7",
+      "cost": 0.06
+    }
+  ]
+}

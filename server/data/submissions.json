@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "id": "805f48c8-6aa7-4cf8-9f14-e7aec49bde5e",
+    "timestamp": "2026-05-26T07:31:32.348Z",
+    "fullName": "Nguyễn Văn A",
+    "phone": "0912345678",
+    "email": "test@example.com",
+    "story": "Test",
+    "ip": "127.0.0.1"
+  }
+]
