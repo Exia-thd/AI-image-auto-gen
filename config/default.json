@@ -1,0 +1,34 @@
+{
+  "campaign": {
+    "name": "Hà Nội Yên Của Tôi",
+    "brand": "La Vie",
+    "startDate": "2024-06-01",
+    "endDate": "2024-06-30",
+    "description": "Chia sẻ góc Yên của bạn, nhận quà thú vị từ La Vie"
+  },
+  "form": {
+    "fields": [
+      { "key": "fullName", "label": "Họ và tên", "type": "text", "required": true },
+      { "key": "phone", "label": "Số điện thoại", "type": "tel", "required": true },
+      { "key": "email", "label": "Email", "type": "email", "required": false },
+      { "key": "story", "label": "Câu chuyện của bạn", "type": "textarea", "required": false, "maxLength": 500 }
+    ]
+  },
+  "frames": [
+    { "id": "frame1", "name": "Classic", "file": "frame_classic.png" },
+    { "id": "frame2", "name": "Vintage", "file": "frame_vintage.png" }
+  ],
+  "ai": {
+    "provider": "openai",
+    "model": "gpt-image-1",
+    "maxRetriesPerUser": 3,
+    "spendingLimitUSD": 80,
+    "prompt": "Transform this person's photo into a cute chibi sticker with the following requirements:\n\nSTYLE:\n- Chibi/kawaii anime style\n- Big head (approximately 60% of body), small cute body\n- Large expressive eyes with sparkle/highlight\n- Simplified but recognizable facial features of the person\n- Clean bold outlines suitable for sticker use\n- Soft pastel coloring with vibrant accents\n\nREQUIREMENTS:\n- MUST maintain recognizable likeness to the person (hair color, hairstyle, skin tone, glasses if wearing, distinctive features)\n- Pure white background (for easy background removal)\n- Full body visible (head to toe)\n- Character facing forward or slight 3/4 angle\n- Happy/cheerful expression\n- Size: character should fill 80% of the image area\n\nDO NOT:\n- Add text or watermarks\n- Add complex backgrounds or scenery\n- Make the character look generic — it must resemble the specific person\n- Use realistic proportions — keep it chibi"
+  },
+  "output": {
+    "width": 1080,
+    "height": 1080,
+    "format": "png",
+    "quality": 0.92
+  }
+}
