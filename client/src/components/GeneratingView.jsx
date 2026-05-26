@@ -10,6 +10,68 @@ const MESSAGES = [
   'Sắp xong rồi...',
 ]
 
+function ErrorView({ error, onCancel }) {
+  const [countdown, setCountdown] = useState(error.retryAfter || 0)
+
+  useEffect(() => {
+    if (!error.retryAfter) return
+    const id = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) { clearInterval(id); return 0 }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [error.retryAfter])
+
+  const isRateLimit = error.code === 'rate_limit' || error.code === 'server_busy'
+  const isMaxRetries = error.code === 'max_retries'
+  const isSpending = error.code === 'spending_limit'
+  const isTimeout = error.code === 'timeout'
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6">
+      <div className="max-w-sm w-full text-center">
+        <div className="text-6xl mb-4">
+          {isMaxRetries || isSpending ? '🎉' : isTimeout ? '⏱️' : '😢'}
+        </div>
+        <h2 className="text-xl font-bold text-gray-800 mb-3">
+          {isMaxRetries ? 'Bạn đã dùng hết lượt!'
+            : isSpending ? 'Chương trình tạm dừng'
+            : isTimeout ? 'Mất kết nối'
+            : 'Tạo sticker thất bại'}
+        </h2>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+          <p className="text-red-600 text-sm">{error.message}</p>
+          {isRateLimit && countdown > 0 && (
+            <p className="text-red-500 text-xs mt-2 font-semibold">
+              Thử lại sau: {countdown} giây
+            </p>
+          )}
+        </div>
+        <div className="space-y-3">
+          {!isMaxRetries && !isSpending && (
+            <Button
+              onClick={onCancel}
+              disabled={isRateLimit && countdown > 0}
+            >
+              {isRateLimit && countdown > 0 ? `Đợi ${countdown}s...` : 'Thử lại'}
+            </Button>
+          )}
+          {(isMaxRetries || isSpending) && (
+            <Button onClick={onCancel}>Quay về trang chủ</Button>
+          )}
+          <p className="text-gray-400 text-xs">
+            {isMaxRetries
+              ? 'Cảm ơn bạn đã tham gia chương trình!'
+              : 'Nếu lỗi tiếp tục, vui lòng liên hệ ban tổ chức.'}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function GeneratingView({ generatePromise, onComplete, onCancel }) {
   const [progress, setProgress] = useState(0)
   const [messageIndex, setMessageIndex] = useState(0)
@@ -67,7 +129,11 @@ export default function GeneratingView({ generatePromise, onComplete, onCancel }
         if (cancelledRef.current) return
         clearInterval(timerRef.current)
         clearInterval(msgTimerRef.current)
-        setError(err.message || 'Đã xảy ra lỗi. Vui lòng thử lại.')
+        setError({
+          message: err.message || 'Đã xảy ra lỗi. Vui lòng thử lại.',
+          code: err.code || 'ai_error',
+          retryAfter: err.retryAfter || null,
+        })
       })
 
     return () => {
@@ -84,25 +150,7 @@ export default function GeneratingView({ generatePromise, onComplete, onCancel }
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6">
-        <div className="max-w-sm w-full text-center">
-          <div className="text-6xl mb-4">😢</div>
-          <h2 className="text-xl font-bold text-gray-800 mb-3">Tạo sticker thất bại</h2>
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
-            <p className="text-red-600 text-sm">{error}</p>
-          </div>
-          <div className="space-y-3">
-            <Button onClick={onCancel}>
-              Thử lại
-            </Button>
-            <p className="text-gray-400 text-xs">
-              Nếu lỗi tiếp tục, vui lòng liên hệ ban tổ chức.
-            </p>
-          </div>
-        </div>
-      </div>
-    )
+    return <ErrorView error={error} onCancel={onCancel} />
   }
 
   return (

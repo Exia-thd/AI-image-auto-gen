@@ -68,20 +68,37 @@ export default function PhotoUpload({ formData, onReady, onBack }) {
   const handleGenerate = useCallback(() => {
     if (!imageBase64 || !formData) return
 
-    // Create the API call promise
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 65000)
+
     const generatePromise = fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone: formData.phone,
-        image: imageBase64,
-      }),
+      body: JSON.stringify({ phone: formData.phone, image: imageBase64 }),
+      signal: controller.signal,
     }).then(async (res) => {
+      clearTimeout(timeoutId)
       const data = await res.json()
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Lỗi tạo sticker. Vui lòng thử lại.')
+        // Gắn thêm metadata vào error để GeneratingView hiển thị đúng
+        const err = new Error(data.error || 'Lỗi tạo sticker. Vui lòng thử lại.')
+        err.code = res.status === 429 && data.limitReached ? 'max_retries'
+          : res.status === 429 && data.budgetExceeded ? 'spending_limit'
+          : res.status === 429 ? 'rate_limit'
+          : res.status === 503 ? 'server_busy'
+          : 'ai_error'
+        err.retryAfter = data.retryAfter || null
+        throw err
       }
       return data
+    }).catch((err) => {
+      clearTimeout(timeoutId)
+      if (err.name === 'AbortError') {
+        const timeoutErr = new Error('Quá trình tạo sticker mất quá nhiều thời gian. Vui lòng thử lại.')
+        timeoutErr.code = 'timeout'
+        throw timeoutErr
+      }
+      throw err
     })
 
     onReady({ previewUrl, imageBase64 }, generatePromise)

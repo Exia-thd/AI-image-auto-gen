@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Button from './ui/Button.jsx'
 
-const CAMPAIGN = {
+const DEFAULT_CAMPAIGN = {
   name: 'Hà Nội Yên Của Tôi',
   brand: 'La Vie',
   startDate: '01/06/2024',
@@ -17,9 +17,36 @@ const RULES = [
   'Mỗi người tham gia nhận được quà tặng đặc biệt từ La Vie.',
 ]
 
+function formatDate(isoDate) {
+  if (!isoDate) return isoDate
+  const [y, m, d] = isoDate.split('-')
+  return d && m && y ? `${d}/${m}/${y}` : isoDate
+}
+
 export default function Landing({ onStart }) {
   const [visible, setVisible] = useState(false)
   const [rulesOpen, setRulesOpen] = useState(false)
+  const [campaign, setCampaign] = useState(DEFAULT_CAMPAIGN)
+
+  useEffect(() => {
+    // Fetch campaign config from server
+    fetch('/api/config')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.campaign) {
+          setCampaign({
+            name: data.campaign.name || DEFAULT_CAMPAIGN.name,
+            brand: data.campaign.brand || DEFAULT_CAMPAIGN.brand,
+            startDate: formatDate(data.campaign.startDate) || DEFAULT_CAMPAIGN.startDate,
+            endDate: formatDate(data.campaign.endDate) || DEFAULT_CAMPAIGN.endDate,
+            description: data.campaign.description || DEFAULT_CAMPAIGN.description,
+          })
+        }
+      })
+      .catch(() => {
+        // Giữ nguyên giá trị mặc định nếu fetch lỗi (offline/dev)
+      })
+  }, [])
 
   useEffect(() => {
     // Trigger fade-in animation
@@ -55,7 +82,7 @@ export default function Landing({ onStart }) {
         <div className="flex justify-center mb-8">
           <div className="bg-white/20 backdrop-blur-sm px-5 py-2 rounded-full border border-white/30">
             <span className="text-white font-bold text-sm tracking-wider uppercase">
-              {CAMPAIGN.brand}
+              {campaign.brand}
             </span>
           </div>
         </div>
@@ -67,7 +94,7 @@ export default function Landing({ onStart }) {
 
           {/* Campaign name */}
           <h1 className="text-4xl font-black text-white leading-tight mb-3 drop-shadow-lg">
-            {CAMPAIGN.name}
+            {campaign.name}
           </h1>
 
           {/* Divider */}
@@ -79,7 +106,7 @@ export default function Landing({ onStart }) {
 
           {/* Description */}
           <p className="text-white/90 text-lg leading-relaxed mb-6 max-w-xs">
-            {CAMPAIGN.description}
+            {campaign.description}
           </p>
 
           {/* Feature badges */}
@@ -91,7 +118,7 @@ export default function Landing({ onStart }) {
 
           {/* Date */}
           <p className="text-white/70 text-sm mb-10">
-            📅 {CAMPAIGN.startDate} — {CAMPAIGN.endDate}
+            📅 {campaign.startDate} — {campaign.endDate}
           </p>
         </div>
 
@@ -154,7 +181,7 @@ export default function Landing({ onStart }) {
         {/* Footer */}
         <div className="mt-6 text-center">
           <p className="text-white/40 text-xs">
-            © 2024 {CAMPAIGN.brand} — Powered by AI
+            © 2024 {campaign.brand} — Powered by AI
           </p>
         </div>
       </div>

@@ -8,6 +8,10 @@ const { generateLimit } = require('../middleware/rateLimit');
 const cacheService = require('../services/cacheService');
 const { generateChibi, COST_PER_REQUEST } = require('../services/aiService');
 
+// Giới hạn số AI request chạy đồng thời — tránh hammering OpenAI khi nhiều người quét QR cùng lúc
+const MAX_CONCURRENT_AI = 3;
+let activeAiRequests = 0;
+
 // Data file paths
 const DATA_DIR = path.join(__dirname, '../data');
 const USAGE_FILE = path.join(DATA_DIR, 'usage.json');
@@ -127,6 +131,17 @@ router.post('/', generateLimit, async (req, res) => {
 
     // Generate chibi via AI
     console.log(`[Generate] Cache miss — calling AI for hash: ${hash}`);
+
+    if (activeAiRequests >= MAX_CONCURRENT_AI) {
+      console.log(`[Generate] Server busy: ${activeAiRequests}/${MAX_CONCURRENT_AI} concurrent AI requests`);
+      return res.status(503).json({
+        success: false,
+        error: 'Hệ thống đang bận, vui lòng thử lại sau 30 giây.',
+        retryAfter: 30,
+      });
+    }
+
+    activeAiRequests++;
     let chibiBase64;
     try {
       chibiBase64 = await generateChibi(image);
@@ -136,6 +151,8 @@ router.post('/', generateLimit, async (req, res) => {
         success: false,
         error: aiError.message || 'Lỗi tạo sticker. Vui lòng thử lại.',
       });
+    } finally {
+      activeAiRequests--;
     }
 
     // Save to cache
